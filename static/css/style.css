@@ -748,6 +748,24 @@ header h1 {
     color: var(--primary);
 }
 
+.pyq-input-group {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.pyq-input,
+.pyq-select {
+    width: 100%;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 1rem;
+}
+
 .resource-card input,
 .resource-card select {
     width: 100%;
@@ -760,6 +778,8 @@ header h1 {
     font-size: 1rem;
 }
 
+.pyq-input:focus,
+.pyq-select:focus,
 .resource-card input:focus,
 .resource-card select:focus {
     outline: none;
@@ -988,4 +1008,240 @@ header h1 {
 .card-content pre code {
     background: none;
     padding: 0;
+}
+
+/* Dedicated Tab Displays */
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--border);
+}
+
+.tab-header h2 {
+    color: var(--primary);
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.count-badge {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Notes Display */
+.notes-display {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    min-height: 400px;
+    line-height: 1.8;
+}
+
+.notes-display h1, 
+.notes-display h2, 
+.notes-display h3, 
+.notes-display h4 {
+    color: var(--primary);
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.notes-display h1 {
+    font-size: 2.2rem;
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 10px;
+}
+
+.notes-display h2 {
+    font-size: 1.8rem;
+}
+
+.notes-display h3 {
+    font-size: 1.4rem;
+    color: var(--secondary);
+}
+
+.notes-display code {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: var(--secondary);
+}
+
+.notes-display pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 15px 0;
+}
+
+.notes-display pre code {
+    background: none;
+    padding: 0;
+    color: #e0e0e0;
+}
+
+.notes-display ul, 
+.notes-display ol {
+    margin: 15px 0;
+    padding-left: 30px;
+}
+
+.notes-display li {
+    margin-bottom: 10px;
+}
+
+.notes-display strong {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.notes-display em {
+    color: var(--secondary);
+    font-style: italic;
+}
+
+/* Flashcards Display */
+.flashcards-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    min-height: 400px;
+}
+
+.flashcard {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 15px;
+    padding: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.flashcard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+    border-color: var(--primary);
+}
+
+.flashcard.flipped {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+}
+
+.flashcard h4 {
+    color: var(--primary);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.flashcard-question {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 15px;
+}
+
+.flashcard-answer {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: none;
+}
+
+.flashcard.flipped .flashcard-answer {
+    display: block;
+}
+
+.flashcard-hint {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+/* Mind Map Display */
+.mindmap-display {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 30px;
+    backdrop-filter: blur(10px);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+}
+
+.mindmap-display pre.mermaid {
+    width: 100%;
+    background: transparent;
+    border: none;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mindmap-display .mermaid {
+    width: 100%;
+    min-height: 500px;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+.mindmap-display svg {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 500px !important;
+}
+
+/* Force mermaid mindmap to be visible */
+.mindmap-display svg[aria-roledescription="mindmap"] {
+    width: 100% !important;
+    height: 600px !important;
+    max-width: none !important;
+}
+
+.mindmap-display svg g {
+    transform: scale(1);
+}
+
+/* Placeholder styling for all displays */
+.notes-display .placeholder,
+.flashcards-display .placeholder,
+.mindmap-display .placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    padding: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
 }

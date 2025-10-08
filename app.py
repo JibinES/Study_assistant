@@ -57,6 +57,44 @@ def generate_study_content():
             'error': str(e)
         }), 500
 
+@app.route('/api/generate-mindmap-image', methods=['POST'])
+def generate_mindmap_image():
+    """Generate mind map as PNG image"""
+    try:
+        data = request.json
+        mindmap_code = data.get('mindmap', '')
+        
+        if not mindmap_code:
+            return jsonify({
+                'success': False,
+                'error': 'No mindmap code provided'
+            }), 400
+        
+        # Generate image using Playwright
+        image_data = gemini._mermaid_to_image(mindmap_code)
+        
+        if not image_data:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to generate mindmap image'
+            }), 500
+        
+        # Return image as base64
+        import base64
+        image_base64 = base64.b64encode(image_data).decode('utf-8')
+        
+        return jsonify({
+            'success': True,
+            'image': f'data:image/png;base64,{image_base64}'
+        })
+    
+    except Exception as e:
+        print(f"Error generating mindmap image: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/download-pdf', methods=['POST'])
 def download_pdf():
     """Generate and download PDF of study notes"""
@@ -390,6 +428,41 @@ def get_subjects():
         })
     
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/download-pyq/<subject_code>/<year>', methods=['GET'])
+def download_pyq(subject_code, year):
+    """Download PYQ file for given subject code and year"""
+    try:
+        import os
+        
+        # Construct filename: subjectcode_year.docx
+        filename = f"{subject_code}_{year}.docx"
+        
+        # Path to PYQ directory (one level up from study-assistant)
+        pyq_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'PYQ')
+        file_path = os.path.join(pyq_dir, filename)
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            return jsonify({
+                'success': False,
+                'error': f'PYQ not found for {subject_code} ({year})'
+            }), 404
+        
+        # Send file
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    
+    except Exception as e:
+        print(f"Error downloading PYQ: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

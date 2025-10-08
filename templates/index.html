@@ -21,6 +21,9 @@
         <!-- Navigation Tabs -->
         <nav class="tabs-container">
             <button class="tab active" data-tab="study" onclick="switchTab('study')">📚 Study</button>
+            <button class="tab" data-tab="notes" onclick="switchTab('notes')">📝 Notes</button>
+            <button class="tab" data-tab="flashcards" onclick="switchTab('flashcards')">🎴 Flashcards</button>
+            <button class="tab" data-tab="mindmap" onclick="switchTab('mindmap')">🧠 Mind Map</button>
             <button class="tab" data-tab="planner" onclick="switchTab('planner')">📅 Planner</button>
             <button class="tab" data-tab="zone" onclick="switchTab('zone')">⏰ Zone</button>
             <button class="tab" data-tab="resources" onclick="switchTab('resources')">📁 Resources</button>
@@ -58,32 +61,39 @@
                     <button onclick="sendMessage()" class="btn-chat">Send</button>
                 </div>
             </div>
+        </div>
 
-            <!-- Generated Content Cards -->
-            <div class="content-cards" id="content-cards">
-                <div class="card" id="notes-card">
-                    <div class="card-header">
-                        <h3>📝 Study Notes</h3>
-                        <button id="download-pdf-btn" class="btn-download hidden" onclick="downloadPDF()">
-                            📥 Download PDF
-                        </button>
-                    </div>
-                    <div class="card-content" id="notes-content">
-                        <p class="placeholder">Generate study material to see notes here</p>
-                    </div>
-                </div>
-                <div class="card" id="flashcards-card">
-                    <h3>🎴 Flashcards (5 cards)</h3>
-                    <div class="card-content" id="flashcards-content">
-                        <p class="placeholder">Generate study material to see flashcards here</p>
-                    </div>
-                </div>
-                <div class="card" id="mindmap-card">
-                    <h3>🧠 Mind Map</h3>
-                    <div class="card-content" id="mindmap-content">
-                        <p class="placeholder">Generate study material to see mind map here</p>
-                    </div>
-                </div>
+        <!-- Notes Tab -->
+        <div id="notes" class="tab-content">
+            <div class="tab-header">
+                <h2>📝 Study Notes</h2>
+                <button id="download-pdf-btn" class="btn-download hidden" onclick="downloadPDF()">
+                    📥 Download PDF
+                </button>
+            </div>
+            <div class="notes-display" id="notes-content">
+                <p class="placeholder">Generate study material from the Study tab to see notes here</p>
+            </div>
+        </div>
+
+        <!-- Flashcards Tab -->
+        <div id="flashcards" class="tab-content">
+            <div class="tab-header">
+                <h2>🎴 Flashcards</h2>
+                <div id="flashcard-count" class="count-badge hidden">5 cards</div>
+            </div>
+            <div class="flashcards-display" id="flashcards-content">
+                <p class="placeholder">Generate study material from the Study tab to see flashcards here</p>
+            </div>
+        </div>
+
+        <!-- Mind Map Tab -->
+        <div id="mindmap" class="tab-content">
+            <div class="tab-header">
+                <h2>🧠 Mind Map</h2>
+            </div>
+            <div class="mindmap-display" id="mindmap-content">
+                <p class="placeholder">Generate study material from the Study tab to see mind map here</p>
             </div>
         </div>
 
@@ -165,16 +175,18 @@
             <div class="resources-grid">
                 <div class="resource-card">
                     <h3>📚 Previous Year Questions</h3>
-                    <input type="text" id="pyq-subject" placeholder="Enter Subject Code (e.g., CS301)" />
-                    <select id="pyq-exam-type">
-                        <option value="">All Exams</option>
-                        <option value="internal1">Internal 1</option>
-                        <option value="internal2">Internal 2</option>
-                        <option value="internal3">Internal 3</option>
-                        <option value="semester">Semester</option>
-                    </select>
-                    <button onclick="fetchPYQs()" class="btn-primary">Get PYQs</button>
-                    <div id="pyq-display"></div>
+                    <div class="pyq-input-group">
+                        <input type="text" id="pyq-subject" placeholder="Enter Subject Code (e.g., 20CS2013)" class="pyq-input" />
+                        <select id="pyq-year" class="pyq-select">
+                            <option value="">Select Year</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                            <option value="2021">2021</option>
+                        </select>
+                    </div>
+                    <button onclick="downloadPYQ()" class="btn-primary">📥 Download PYQ</button>
+                    <div id="pyq-display" style="margin-top: 15px;"></div>
                 </div>
                 
                 <div class="resource-card">

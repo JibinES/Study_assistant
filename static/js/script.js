@@ -98,7 +98,6 @@ async function generateContent() {
     
     // Show loading
     document.getElementById('loading').classList.remove('hidden');
-    document.getElementById('content-cards').style.opacity = '0.5';
     
     try {
         // First, generate flashcards and mindmap (non-streaming)
@@ -116,15 +115,20 @@ async function generateContent() {
         // Update context for chat
         currentContext = `Subject: ${result.subject_name} (${subjectCode}), Exam: ${examType}`;
         
-        // Display flashcards
+        // Display flashcards in dedicated tab
         const flashcardsContent = document.getElementById('flashcards-content');
         displayFlashcards(result.flashcards, flashcardsContent);
         
-        // Display mind map using Mermaid.js
+        // Show flashcard count
+        const countBadge = document.getElementById('flashcard-count');
+        countBadge.textContent = `${result.flashcards.length} cards`;
+        countBadge.classList.remove('hidden');
+        
+        // Display mind map using Mermaid.js in dedicated tab
         const mindmapContent = document.getElementById('mindmap-content');
         displayMermaidMindMap(result.mindmap, mindmapContent);
         
-        // Now stream the study notes
+        // Now stream the study notes to dedicated tab
         const notesContent = document.getElementById('notes-content');
         notesContent.innerHTML = '<p class="streaming-indicator">Generating notes...</p>';
         
@@ -180,16 +184,15 @@ async function generateContent() {
         // Store notes for PDF generation
         currentNotes = fullNotes;
         
-        // Show download button
+        // Show download button in Notes tab
         document.getElementById('download-pdf-btn').classList.remove('hidden');
         
-        showNotification(`Study material generated for ${result.subject_name}!`, 'success');
+        showNotification(`Study material generated for ${result.subject_name}! Check the Notes, Flashcards, and Mind Map tabs.`, 'success');
     } catch (error) {
         console.error('Error generating content:', error);
         showNotification('Error generating content: ' + error.message, 'error');
     } finally {
         document.getElementById('loading').classList.add('hidden');
-        document.getElementById('content-cards').style.opacity = '1';
     }
 }
 
@@ -270,8 +273,10 @@ function displayFlashcards(flashcardsJSON, container) {
         flashcards.forEach((card, index) => {
             html += `
                 <div class="flashcard" onclick="flipCard(${index})">
-                    <div class="flashcard-question">Q: ${card.question}</div>
-                    <div class="flashcard-answer" id="answer-${index}">A: ${card.answer}</div>
+                    <h4>Card ${index + 1}</h4>
+                    <div class="flashcard-question">${card.question}</div>
+                    <div class="flashcard-answer" id="answer-${index}">${card.answer}</div>
+                    <div class="flashcard-hint">Click to flip</div>
                 </div>
             `;
         });
@@ -289,20 +294,77 @@ function flipCard(index) {
     card.classList.toggle('flipped');
 }
 
-// Display mind map using Mermaid.js
-function displayMermaidMindMap(mermaidCode, container) {
+// Display mind map using server-side rendering to image
+async function displayMermaidMindMap(mermaidCode, container) {
     try {
-        // Create a unique ID for the mermaid diagram
-        const diagramId = 'mermaid-' + Date.now();
-        container.innerHTML = `<div id="${diagramId}" class="mermaid-container">${mermaidCode}</div>`;
+        console.log('Displaying mind map...');
+        console.log('Mermaid code:', mermaidCode);
         
-        // Render the mermaid diagram
-        mermaid.run({
-            querySelector: `#${diagramId}`
+        // Show loading state with spinner
+        container.innerHTML = `
+            <div style="text-align: center; padding: 80px;">
+                <div class="spinner" style="margin: 0 auto 20px;"></div>
+                <p class="placeholder">Rendering mind map as image...</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px;">
+                    This may take a few moments
+                </p>
+            </div>
+        `;
+        
+        // Validate mermaid code
+        if (!mermaidCode || typeof mermaidCode !== 'string') {
+            throw new Error('Invalid mermaid code');
+        }
+        
+        // Call backend to generate image
+        const response = await fetch('/api/generate-mindmap-image', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                mindmap: mermaidCode
+            })
         });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to generate mindmap image');
+        }
+        
+        // Display the HIGH-QUALITY image
+        container.innerHTML = `
+            <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding: 20px;">
+                <img 
+                    src="${result.image}" 
+                    alt="Mind Map - High Quality" 
+                    style="
+                        max-width: 100%; 
+                        height: auto; 
+                        border-radius: 10px; 
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                        image-rendering: -webkit-optimize-contrast;
+                        image-rendering: crisp-edges;
+                    " 
+                />
+            </div>
+        `;
+        
+        console.log('Mind map image displayed successfully');
     } catch (error) {
         console.error('Error rendering mind map:', error);
-        container.innerHTML = '<p class="placeholder">Error loading mind map</p>';
+        console.error('Mermaid code was:', mermaidCode);
+        container.innerHTML = `
+            <div style="text-align: center; padding: 50px;">
+                <p class="placeholder">Error loading mind map</p>
+                <p style="color: var(--error); font-size: 0.9rem; margin-top: 10px;">
+                    ${error.message || 'Please try regenerating the content'}
+                </p>
+                <details style="margin-top: 15px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    <summary style="cursor: pointer; color: var(--text-secondary);">View Error Details</summary>
+                    <pre style="background: var(--surface); padding: 10px; border-radius: 5px; margin-top: 10px; overflow-x: auto; font-size: 0.85rem;">${error.stack || error.message}</pre>
+                </details>
+            </div>
+        `;
     }
 }
 
@@ -769,6 +831,71 @@ function updateStreak() {
 }
 
 // Resources Functions
+// Download PYQ function
+async function downloadPYQ() {
+    const subjectCode = document.getElementById('pyq-subject').value.trim().toUpperCase();
+    const year = document.getElementById('pyq-year').value;
+    const displayDiv = document.getElementById('pyq-display');
+    
+    // Validation
+    if (!subjectCode) {
+        showNotification('Please enter a subject code', 'error');
+        return;
+    }
+    
+    if (!year) {
+        showNotification('Please select a year', 'error');
+        return;
+    }
+    
+    // Show loading
+    displayDiv.innerHTML = '<p class="placeholder">Searching for PYQ...</p>';
+    
+    try {
+        // Construct the download URL
+        const downloadUrl = `/api/download-pyq/${subjectCode}/${year}`;
+        
+        // Fetch to check if file exists
+        const response = await fetch(downloadUrl);
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'PYQ not found');
+        }
+        
+        // Create a temporary anchor element to trigger download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${subjectCode}_${year}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        // Show success message
+        displayDiv.innerHTML = `
+            <div style="background: var(--success); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="margin: 0; font-weight: 600;">✓ Downloaded Successfully!</p>
+                <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${subjectCode} - ${year}</p>
+            </div>
+        `;
+        
+        showNotification(`PYQ downloaded: ${subjectCode} (${year})`, 'success');
+    } catch (error) {
+        console.error('Error downloading PYQ:', error);
+        displayDiv.innerHTML = `
+            <div style="background: var(--error); color: white; padding: 15px; border-radius: 10px; text-align: center;">
+                <p style="margin: 0; font-weight: 600;">✗ Not Found</p>
+                <p style="margin: 5px 0 0 0; font-size: 0.9rem;">${error.message}</p>
+            </div>
+        `;
+        showNotification(error.message, 'error');
+    }
+}
+
+// Old fetchPYQs function (kept for compatibility)
 async function fetchPYQs() {
     const subjectCode = document.getElementById('pyq-subject').value.trim().toUpperCase();
     const examType = document.getElementById('pyq-exam-type').value;

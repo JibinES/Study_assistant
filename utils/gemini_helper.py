@@ -442,29 +442,43 @@ Provide a helpful, encouraging, and educational response."""
         return text
     
     def _mermaid_to_image(self, mermaid_code):
-        """Convert Mermaid code to PNG image using Playwright (fast, no Node.js needed!)"""
+        """Convert Mermaid code to HIGH-QUALITY PNG image using Playwright"""
         try:
             from playwright.sync_api import sync_playwright
             
-            print("🎨 Converting mind map to image using Playwright...")
+            print("🎨 Converting mind map to HIGH-QUALITY image using Playwright...")
             
-            # Create HTML with Mermaid diagram
+            # Create HTML with Mermaid diagram - optimized for quality
             html_content = f"""
             <!DOCTYPE html>
             <html>
             <head>
+                <meta charset="UTF-8">
                 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
                 <style>
+                    * {{
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }}
                     body {{
                         margin: 0;
-                        padding: 20px;
+                        padding: 40px;
                         background: white;
                         display: flex;
                         justify-content: center;
                         align-items: center;
+                        min-height: 100vh;
                     }}
                     .mermaid {{
                         background: white;
+                        font-family: 'Arial', 'Helvetica', sans-serif;
+                        font-size: 16px;
+                    }}
+                    /* Ensure high quality text rendering */
+                    svg {{
+                        shape-rendering: geometricPrecision;
+                        text-rendering: geometricPrecision;
                     }}
                 </style>
             </head>
@@ -473,30 +487,51 @@ Provide a helpful, encouraging, and educational response."""
 {mermaid_code}
                 </div>
                 <script>
-                    mermaid.initialize({{ startOnLoad: true, theme: 'default' }});
+                    mermaid.initialize({{ 
+                        startOnLoad: true, 
+                        theme: 'default',
+                        themeVariables: {{
+                            fontSize: '16px',
+                            fontFamily: 'Arial, Helvetica, sans-serif'
+                        }},
+                        mindmap: {{
+                            padding: 20,
+                            useMaxWidth: false
+                        }}
+                    }});
                 </script>
             </body>
             </html>
             """
             
-            # Use Playwright to render and screenshot
+            # Use Playwright to render and screenshot at HIGH RESOLUTION
             with sync_playwright() as p:
                 # Launch browser in headless mode
                 browser = p.chromium.launch(headless=True)
-                page = browser.new_page(viewport={'width': 1200, 'height': 800})
+                
+                # Create page with HIGH RESOLUTION viewport (2x for retina quality)
+                page = browser.new_page(
+                    viewport={'width': 2400, 'height': 1600},  # 2x resolution for crisp images
+                    device_scale_factor=2  # Retina/HiDPI quality
+                )
                 
                 # Set the HTML content
                 page.set_content(html_content)
                 
-                # Wait for Mermaid to render
-                page.wait_for_timeout(2000)  # 2 seconds for rendering
+                # Wait for Mermaid to fully render (increased for complex diagrams)
+                page.wait_for_timeout(3000)  # 3 seconds for complete rendering
                 
-                # Take screenshot of the mermaid element
-                screenshot_bytes = page.locator('.mermaid').screenshot(type='png')
+                # Take HIGH-QUALITY screenshot of the mermaid element
+                screenshot_bytes = page.locator('.mermaid').screenshot(
+                    type='png',
+                    scale='device',  # Use device scale factor for quality
+                    animations='disabled'  # Ensure stable rendering
+                )
                 
                 browser.close()
                 
-            print("✓ Mind map converted to image successfully! (~2-3 seconds)")
+            print("✓ HIGH-QUALITY mind map image created successfully!")
+            print(f"✓ Image size: {len(screenshot_bytes)} bytes")
             return screenshot_bytes
             
         except ImportError:
@@ -506,10 +541,6 @@ Provide a helpful, encouraging, and educational response."""
         except Exception as e:
             print(f"⚠ Mind map image conversion failed: {str(e)}")
             print("ℹ Mind map will be included as Mermaid code in PDF")
-            return None
-                
-        except Exception as e:
-            print(f"Error in mermaid conversion: {str(e)}")
             return None
     
     def generate_pdf_from_notes(self, notes_text, subject_name, exam_type, mindmap_code=None):
@@ -597,14 +628,21 @@ Provide a helpful, encouraging, and educational response."""
                 mindmap_image = self._mermaid_to_image(mindmap_code)
                 
                 if mindmap_image:
-                    # Save image to temporary file (delete=False so it persists)
+                    # Save HIGH-QUALITY image to temporary file (delete=False so it persists)
                     with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_img:
                         tmp_img.write(mindmap_image)
                         temp_img_path = tmp_img.name
                     
-                    # Add image to PDF using the file path
-                    img = Image(temp_img_path, width=450, height=300, kind='proportional')
+                    # Add HIGH-QUALITY image to PDF with better sizing
+                    # Using larger dimensions and proportional scaling for crisp output
+                    img = Image(temp_img_path, width=500, height=350, kind='proportional')
+                    img.hAlign = 'CENTER'  # Center the image
                     elements.append(img)
+                    elements.append(Spacer(1, 12))
+                    elements.append(Paragraph(
+                        '<i>High-resolution mind map visualization</i>', 
+                        styles['Normal']
+                    ))
                 else:
                     # If image conversion failed, add mermaid code as text
                     elements.append(Paragraph("Mind Map Diagram (Mermaid Code):", styles['Heading3']))
