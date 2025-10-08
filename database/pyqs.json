@@ -1,0 +1,130 @@
+{
+  "CS301": {
+    "internal1": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain different types of arrays with examples and their time complexities",
+          "Write an algorithm for insertion in a singly linked list at different positions",
+          "Compare and contrast arrays and linked lists with suitable examples",
+          "Implement a stack using arrays and explain its applications",
+          "What is a circular linked list? Explain with advantages"
+        ]
+      },
+      {
+        "year": "2022",
+        "questions": [
+          "Discuss the various operations that can be performed on a linked list",
+          "Explain the concept of dynamic memory allocation with examples",
+          "Write a program to reverse a linked list",
+          "What are the advantages of doubly linked list over singly linked list?"
+        ]
+      }
+    ],
+    "internal2": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain Binary Search Tree with insertion and deletion operations",
+          "What is AVL tree? Explain rotations with examples",
+          "Implement inorder, preorder, and postorder traversals",
+          "Discuss the applications of trees in real-world scenarios"
+        ]
+      }
+    ],
+    "internal3": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain different graph representations with examples",
+          "Implement BFS and DFS algorithms",
+          "Discuss Dijkstra's shortest path algorithm",
+          "What is Minimum Spanning Tree? Explain Prim's and Kruskal's algorithms"
+        ]
+      }
+    ],
+    "semester": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain various sorting algorithms with time complexity analysis",
+          "What is hashing? Discuss collision resolution techniques",
+          "Implement Quick Sort and analyze its performance",
+          "Explain the concept of heap and its applications",
+          "Discuss graph traversal algorithms with applications",
+          "What are balanced trees? Compare AVL and Red-Black trees"
+        ]
+      }
+    ]
+  },
+  "CS302": {
+    "internal1": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain the three-level architecture of DBMS",
+          "What is ER model? Draw an ER diagram for a library management system",
+          "Discuss different types of attributes in ER model",
+          "Explain the relational model with examples"
+        ]
+      }
+    ],
+    "internal2": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain normalization with examples up to BCNF",
+          "What are functional dependencies? Discuss their properties",
+          "Write SQL queries for different types of joins",
+          "Explain the concept of views and their advantages"
+        ]
+      }
+    ],
+    "semester": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain ACID properties with examples",
+          "What is concurrency control? Discuss locking mechanisms",
+          "Explain B-Tree and B+ Tree indexing",
+          "Discuss transaction states and recovery techniques"
+        ]
+      }
+    ]
+  },
+  "CS303": {
+    "internal1": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain different types of operating systems",
+          "What are system calls? Discuss with examples",
+          "Explain process states and state transitions",
+          "Compare different CPU scheduling algorithms"
+        ]
+      }
+    ],
+    "internal2": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain paging and segmentation",
+          "What is virtual memory? Discuss page replacement algorithms",
+          "Explain the concept of thrashing",
+          "Compare FIFO, LRU, and Optimal page replacement algorithms"
+        ]
+      }
+    ],
+    "semester": [
+      {
+        "year": "2023",
+        "questions": [
+          "Explain deadlock detection and prevention",
+          "What is critical section problem? Discuss solutions",
+          "Explain different disk scheduling algorithms",
+          "Discuss file allocation methods with advantages and disadvantages"
+        ]
+      }
+    ]
+  }
+}

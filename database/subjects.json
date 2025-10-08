@@ -1,0 +1,92 @@
+{
+  "CS301": {
+    "name": "Data Structures",
+    "modules": [
+      {
+        "id": 1,
+        "name": "Arrays and Linked Lists",
+        "topics": ["Arrays", "Dynamic Arrays", "Linked Lists", "Doubly Linked Lists", "Circular Linked Lists"]
+      },
+      {
+        "id": 2,
+        "name": "Stacks and Queues",
+        "topics": ["Stack Implementation", "Queue Implementation", "Priority Queue", "Applications of Stacks", "Applications of Queues"]
+      },
+      {
+        "id": 3,
+        "name": "Trees",
+        "topics": ["Binary Trees", "Binary Search Trees", "AVL Trees", "Tree Traversals", "Heap"]
+      },
+      {
+        "id": 4,
+        "name": "Graphs",
+        "topics": ["Graph Representation", "BFS", "DFS", "Shortest Path Algorithms", "Minimum Spanning Tree"]
+      },
+      {
+        "id": 5,
+        "name": "Sorting and Searching",
+        "topics": ["Bubble Sort", "Quick Sort", "Merge Sort", "Binary Search", "Hashing"]
+      }
+    ]
+  },
+  "CS302": {
+    "name": "Database Management Systems",
+    "modules": [
+      {
+        "id": 1,
+        "name": "Introduction to DBMS",
+        "topics": ["Database Concepts", "DBMS Architecture", "Data Models", "ER Model", "Relational Model"]
+      },
+      {
+        "id": 2,
+        "name": "SQL",
+        "topics": ["DDL", "DML", "DCL", "Joins", "Subqueries", "Views"]
+      },
+      {
+        "id": 3,
+        "name": "Normalization",
+        "topics": ["Functional Dependencies", "1NF", "2NF", "3NF", "BCNF"]
+      },
+      {
+        "id": 4,
+        "name": "Transactions",
+        "topics": ["ACID Properties", "Concurrency Control", "Deadlock", "Recovery"]
+      },
+      {
+        "id": 5,
+        "name": "Indexing and Hashing",
+        "topics": ["B-Trees", "B+ Trees", "Hash Functions", "Static Hashing", "Dynamic Hashing"]
+      }
+    ]
+  },
+  "CS303": {
+    "name": "Operating Systems",
+    "modules": [
+      {
+        "id": 1,
+        "name": "Introduction",
+        "topics": ["OS Functions", "Types of OS", "System Calls", "OS Structure"]
+      },
+      {
+        "id": 2,
+        "name": "Process Management",
+        "topics": ["Process States", "PCB", "Scheduling Algorithms", "Context Switching"]
+      },
+      {
+        "id": 3,
+        "name": "Memory Management",
+        "topics": ["Paging", "Segmentation", "Virtual Memory", "Page Replacement"]
+      },
+      {
+        "id": 4,
+        "name": "Synchronization",
+        "topics": ["Critical Section", "Semaphores", "Monitors", "Deadlock"]
+      },
+      {
+        "id": 5,
+        "name": "File Systems",
+        "topics": ["File Concepts", "Directory Structure", "Allocation Methods", "Disk Scheduling"]
+      }
+    ]
+  }
+}

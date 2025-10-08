@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎓 AI Study Assistant</h1>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-container">
+            <button class="tab active" data-tab="study" onclick="switchTab('study')">📚 Study</button>
+            <button class="tab" data-tab="planner" onclick="switchTab('planner')">📅 Planner</button>
+            <button class="tab" data-tab="zone" onclick="switchTab('zone')">⏰ Zone</button>
+            <button class="tab" data-tab="resources" onclick="switchTab('resources')">📁 Resources</button>
+        </nav>
+
+        <!-- Study Tab (Default Active) -->
+        <div id="study" class="tab-content active">
+            <!-- Input Section -->
+            <div class="study-input-section">
+                <input type="text" id="subject-code" placeholder="Enter Subject Code (e.g., CS301)" />
+                <select id="exam-type">
+                    <option value="internal1">Internal 1</option>
+                    <option value="internal2">Internal 2</option>
+                    <option value="internal3">Internal 3</option>
+                    <option value="semester">Semester Exam</option>
+                </select>
+                <button onclick="generateContent()" class="btn-primary">Generate Study Material</button>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Generating your study materials...</p>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-message assistant">
+                        <p>👋 Hello! I'm your AI study assistant. Ask me anything about your subjects!</p>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Ask questions about your subject..." onkeypress="handleChatEnter(event)" />
+                    <button onclick="sendMessage()" class="btn-chat">Send</button>
+                </div>
+            </div>
+
+            <!-- Generated Content Cards -->
+            <div class="content-cards" id="content-cards">
+                <div class="card" id="notes-card">
+                    <h3>📝 Study Notes</h3>
+                    <div class="card-content" id="notes-content">
+                        <p class="placeholder">Generate study material to see notes here</p>
+                    </div>
+                </div>
+                <div class="card" id="flashcards-card">
+                    <h3>🎴 Flashcards</h3>
+                    <div class="card-content" id="flashcards-content">
+                        <p class="placeholder">Generate study material to see flashcards here</p>
+                    </div>
+                </div>
+                <div class="card" id="mindmap-card">
+                    <h3>🧠 Mind Map</h3>
+                    <div class="card-content" id="mindmap-content">
+                        <p class="placeholder">Generate study material to see mind map here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planner Tab -->
+        <div id="planner" class="tab-content">
+            <div class="planner-input">
+                <h2>Create Your Study Schedule</h2>
+                <input type="text" id="subjects-list" placeholder="Enter subjects (comma-separated, e.g., CS301, CS302)" />
+                <input type="date" id="exam-date" />
+                <input type="number" id="hours-per-day" placeholder="Study hours per day" min="1" max="12" value="4" />
+                <button onclick="generateSchedule()" class="btn-primary">Generate Schedule</button>
+            </div>
+            
+            <div id="schedule-loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Creating your personalized schedule...</p>
+            </div>
+            
+            <div class="schedule-display" id="schedule-display">
+                <p class="placeholder">Enter your details above to generate a study schedule</p>
+            </div>
+        </div>
+
+        <!-- Zone Tab -->
+        <div id="zone" class="tab-content">
+            <div class="timer-section">
+                <h2>Pomodoro Timer</h2>
+                <div class="timer-display" id="timer">25:00</div>
+                <div class="timer-controls">
+                    <input type="number" id="timer-minutes" placeholder="Minutes" value="25" min="1" max="120" />
+                    <div class="timer-buttons">
+                        <button onclick="startTimer()" class="btn-timer">▶️ Start</button>
+                        <button onclick="pauseTimer()" class="btn-timer">⏸️ Pause</button>
+                        <button onclick="resetTimer()" class="btn-timer">🔄 Reset</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sessions-history">
+                <h3>Study Sessions</h3>
+                <div id="sessions-list">
+                    <p class="placeholder">Your completed study sessions will appear here</p>
+                </div>
+                <div class="streak-display">
+                    <span>🔥 Current Streak: </span>
+                    <span id="streak-count">0 days</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources Tab -->
+        <div id="resources" class="tab-content">
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <h3>📚 Previous Year Questions</h3>
+                    <input type="text" id="pyq-subject" placeholder="Enter Subject Code (e.g., CS301)" />
+                    <select id="pyq-exam-type">
+                        <option value="">All Exams</option>
+                        <option value="internal1">Internal 1</option>
+                        <option value="internal2">Internal 2</option>
+                        <option value="internal3">Internal 3</option>
+                        <option value="semester">Semester</option>
+                    </select>
+                    <button onclick="fetchPYQs()" class="btn-primary">Get PYQs</button>
+                    <div id="pyq-display"></div>
+                </div>
+                
+                <div class="resource-card">
+                    <h3>🔗 Additional Links</h3>
+                    <div id="links-list">
+                        <p class="placeholder">Loading resources...</p>
+                    </div>
+                </div>
+                
+                <div class="resource-card">
+                    <h3>🏆 Certifications</h3>
+                    <div id="certifications-list">
+                        <p class="placeholder">Loading certifications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="notification hidden"></div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
