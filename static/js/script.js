@@ -8,6 +8,7 @@ let currentNotes = '';
 let currentSubjectName = '';
 let currentSubjectCode = '';
 let currentExamType = '';
+let currentMindmap = '';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -110,6 +111,7 @@ async function generateContent() {
         currentSubjectName = result.subject_name;
         currentSubjectCode = result.subject_code;
         currentExamType = result.exam_type;
+        currentMindmap = result.mindmap;  // Store mindmap code
         
         // Update context for chat
         currentContext = `Subject: ${result.subject_name} (${subjectCode}), Exam: ${examType}`;
@@ -193,24 +195,65 @@ async function generateContent() {
 
 // Render markdown-like content
 function renderMarkdown(text) {
-    // Basic markdown rendering
-    let html = text
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*)\*/gim, '<em>$1</em>')
-        .replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
-        .replace(/`([^`]+)`/gim, '<code>$1</code>')
-        .replace(/^\* (.*$)/gim, '<li>$1</li>')
-        .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>');
+    // Enhanced markdown rendering with table support
+    let html = text;
     
-    // Wrap list items in ul
-    html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>');
+    // Handle markdown tables
+    const tableRegex = /\|(.+)\|[\r\n]+\|[\s\-:|]+\|[\r\n]+((?:\|.+\|[\r\n]*)+)/g;
+    html = html.replace(tableRegex, (match, header, rows) => {
+        const headers = header.split('|').filter(h => h.trim()).map(h => h.trim());
+        const rowArray = rows.trim().split('\n').map(row => 
+            row.split('|').filter(cell => cell.trim()).map(cell => cell.trim())
+        );
+        
+        let table = '<table class="schedule-table"><thead><tr>';
+        headers.forEach(h => table += `<th>${h}</th>`);
+        table += '</tr></thead><tbody>';
+        
+        rowArray.forEach(row => {
+            table += '<tr>';
+            row.forEach(cell => table += `<td>${cell}</td>`);
+            table += '</tr>';
+        });
+        
+        table += '</tbody></table>';
+        return table;
+    });
     
-    return `<p>${html}</p>`;
+    // Code blocks (before inline code)
+    html = html.replace(/```([\s\S]*?)```/gim, '<pre><code>$1</code></pre>');
+    
+    // Headings
+    html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    
+    // Bold and italic (handle bold before italic to avoid conflicts)
+    html = html.replace(/\*\*(.+?)\*\*/gim, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/gim, '<em>$1</em>');
+    
+    // Inline code
+    html = html.replace(/`([^`]+)`/gim, '<code>$1</code>');
+    
+    // Horizontal rule
+    html = html.replace(/^---$/gim, '<hr>');
+    
+    // Lists
+    html = html.replace(/^\* (.+$)/gim, '<li>$1</li>');
+    html = html.replace(/^\- (.+$)/gim, '<li>$1</li>');
+    html = html.replace(/^\d+\. (.+$)/gim, '<li class="numbered">$1</li>');
+    
+    // Wrap consecutive list items in ul/ol
+    html = html.replace(/(<li>.*?<\/li>\n?)+/gis, '<ul>$&</ul>');
+    html = html.replace(/(<li class="numbered">.*?<\/li>\n?)+/gis, '<ol>$&</ol>');
+    html = html.replace(/ class="numbered"/g, '');
+    
+    // Paragraphs
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    
+    return html;
 }
 
 // Display flashcards
@@ -296,7 +339,18 @@ async function downloadPDF() {
         return;
     }
     
+    // Prevent multiple clicks
+    const downloadBtn = document.getElementById('download-pdf-btn');
+    if (downloadBtn.disabled) {
+        return;
+    }
+    
     try {
+        // Disable button and show loading state
+        downloadBtn.disabled = true;
+        const originalText = downloadBtn.textContent;
+        downloadBtn.textContent = '⏳ Generating PDF...';
+        
         const response = await fetch('/api/download-pdf', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -304,7 +358,8 @@ async function downloadPDF() {
                 notes: currentNotes,
                 subject_name: currentSubjectName,
                 exam_type: currentExamType,
-                subject_code: currentSubjectCode
+                subject_code: currentSubjectCode,
+                mindmap: currentMindmap  // Include mindmap code
             })
         });
         
@@ -334,9 +389,17 @@ async function downloadPDF() {
         window.URL.revokeObjectURL(url);
         
         showNotification('PDF downloaded successfully!', 'success');
+        
+        // Re-enable button
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = originalText;
     } catch (error) {
         console.error('Error downloading PDF:', error);
         showNotification('Error downloading PDF: ' + error.message, 'error');
+        
+        // Re-enable button even on error
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = '📥 Download PDF';
     }
 }
 
@@ -439,11 +502,44 @@ function addMessageToChat(message, sender) {
 // Planner Functions with streaming
 async function generateSchedule() {
     const subjects = document.getElementById('subjects-list').value.trim();
-    const examDate = document.getElementById('exam-date').value;
+    const startDate = document.getElementById('start-date').value;
+    const endDate = document.getElementById('end-date').value;
     const hoursPerDay = document.getElementById('hours-per-day').value;
     
-    if (!subjects || !examDate) {
-        showNotification('Please fill in all fields', 'error');
+    // Debug logging
+    console.log('Form values:', { subjects, startDate, endDate, hoursPerDay });
+    
+    if (!subjects) {
+        showNotification('Please enter subjects', 'error');
+        return;
+    }
+    
+    if (!startDate) {
+        showNotification('Please select start date', 'error');
+        return;
+    }
+    
+    if (!endDate) {
+        showNotification('Please select end date', 'error');
+        return;
+    }
+    
+    if (!hoursPerDay || hoursPerDay === '') {
+        showNotification('Please select study hours per day', 'error');
+        return;
+    }
+    
+    // Validate hours per day (minimum 2)
+    if (parseInt(hoursPerDay) < 2) {
+        showNotification('Minimum study hours is 2 hours per day', 'error');
+        return;
+    }
+    
+    // Validate date range
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end < start) {
+        showNotification('End date must be after start date', 'error');
         return;
     }
     
@@ -458,7 +554,8 @@ async function generateSchedule() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 subjects: subjects,
-                exam_date: examDate,
+                start_date: startDate,
+                end_date: endDate,
                 hours_per_day: parseInt(hoursPerDay)
             })
         });

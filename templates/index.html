@@ -92,8 +92,34 @@
             <div class="planner-input">
                 <h2>Create Your Study Schedule</h2>
                 <input type="text" id="subjects-list" placeholder="Enter subjects (comma-separated, e.g., CS301, CS302)" />
-                <input type="date" id="exam-date" />
-                <input type="number" id="hours-per-day" placeholder="Study hours per day" min="1" max="12" value="4" />
+                
+                <div class="date-range">
+                    <div class="input-group">
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date" />
+                    </div>
+                    <div class="input-group">
+                        <label for="end-date">End Date</label>
+                        <input type="date" id="end-date" />
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="hours-per-day">Study Hours Per Day</label>
+                    <select id="hours-per-day">
+                        <option value="2" selected>2 hours</option>
+                        <option value="3">3 hours</option>
+                        <option value="4">4 hours</option>
+                        <option value="5">5 hours</option>
+                        <option value="6">6 hours</option>
+                        <option value="7">7 hours</option>
+                        <option value="8">8 hours</option>
+                        <option value="9">9 hours</option>
+                        <option value="10">10 hours</option>
+                        <option value="12">12 hours</option>
+                    </select>
+                </div>
+                
                 <button onclick="generateSchedule()" class="btn-primary">Generate Schedule</button>
             </div>
             

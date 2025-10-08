@@ -66,6 +66,7 @@ def download_pdf():
         subject_name = data.get('subject_name', 'Study Notes')
         exam_type = data.get('exam_type', 'semester')
         subject_code = data.get('subject_code', '')
+        mindmap = data.get('mindmap', None)  # Get mindmap code
         
         if not notes:
             return jsonify({
@@ -73,8 +74,8 @@ def download_pdf():
                 'error': 'No notes provided'
             }), 400
         
-        # Generate PDF
-        pdf_buffer = gemini.generate_pdf_from_notes(notes, subject_name, exam_type)
+        # Generate PDF with mindmap
+        pdf_buffer = gemini.generate_pdf_from_notes(notes, subject_name, exam_type, mindmap)
         
         if not pdf_buffer:
             return jsonify({
@@ -341,18 +342,26 @@ def create_schedule_stream():
     try:
         data = request.json
         subjects = data.get('subjects', '')
-        exam_date = data.get('exam_date', '')
-        hours_per_day = data.get('hours_per_day', 4)
+        start_date = data.get('start_date', '')
+        end_date = data.get('end_date', '')
+        hours_per_day = data.get('hours_per_day', 2)
         
-        if not subjects or not exam_date:
+        if not subjects or not start_date or not end_date:
             return jsonify({
                 'success': False,
-                'error': 'Please provide subjects and exam date'
+                'error': 'Please provide subjects, start date, and end date'
+            }), 400
+        
+        # Validate hours per day (minimum 2)
+        if hours_per_day < 2:
+            return jsonify({
+                'success': False,
+                'error': 'Minimum study hours is 2 hours per day'
             }), 400
         
         def generate():
             try:
-                for chunk in gemini.create_study_schedule(subjects, exam_date, hours_per_day, stream=True):
+                for chunk in gemini.create_study_schedule(subjects, start_date, end_date, hours_per_day, stream=True):
                     yield f"data: {json.dumps({'text': chunk})}\n\n"
                 yield f"data: {json.dumps({'done': True})}\n\n"
             except Exception as e:
