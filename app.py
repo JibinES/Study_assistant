@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
 from flask_cors import CORS
 from utils.gemini_helper import GeminiHelper
 from utils.database_helper import DatabaseHelper
 import json
 from datetime import datetime
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -34,20 +35,78 @@ def generate_study_content():
                 'error': f'Subject {subject_code} not found in database'
             }), 404
         
-        # Generate all content types
-        notes = gemini.generate_study_notes(subject_code, exam_type, subject_info)
+        # Generate all content types (non-streaming for flashcards and mindmap)
         flashcards = gemini.generate_flashcards(subject_code, exam_type, subject_info)
         mindmap = gemini.generate_mindmap(subject_code, exam_type, subject_info)
         
         return jsonify({
             'success': True,
             'subject_name': subject_info['name'],
-            'notes': notes,
+            'subject_code': subject_code,
+            'exam_type': exam_type,
             'flashcards': flashcards,
             'mindmap': mindmap
         })
     
     except Exception as e:
+        print(f"Error in generate_study_content: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/download-pdf', methods=['POST'])
+def download_pdf():
+    """Generate and download PDF of study notes"""
+    try:
+        data = request.json
+        notes = data.get('notes', '')
+        subject_name = data.get('subject_name', 'Study Notes')
+        exam_type = data.get('exam_type', 'semester')
+        subject_code = data.get('subject_code', '')
+        
+        if not notes:
+            return jsonify({
+                'success': False,
+                'error': 'No notes provided'
+            }), 400
+        
+        # Generate PDF
+        pdf_buffer = gemini.generate_pdf_from_notes(notes, subject_name, exam_type)
+        
+        if not pdf_buffer:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to generate PDF'
+            }), 500
+        
+        # Create a BytesIO object
+        pdf_io = BytesIO(pdf_buffer)
+        pdf_io.seek(0)
+        
+        # Generate filename
+        exam_type_text = {
+            'internal1': 'Internal1',
+            'internal2': 'Internal2',
+            'internal3': 'Internal3',
+            'semester': 'Semester'
+        }.get(exam_type, exam_type)
+        
+        filename = f"{subject_code}_{subject_name.replace(' ', '_')}_{exam_type_text}_Notes.pdf"
+        
+        return send_file(
+            pdf_io,
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=filename
+        )
+    
+    except Exception as e:
+        print(f"Error generating PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': str(e)

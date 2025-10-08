@@ -2,6 +2,14 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import json
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
+from io import BytesIO
+import markdown
+import re
 
 load_dotenv()
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
@@ -10,19 +18,48 @@ class GeminiHelper:
     def __init__(self):
         self.model = genai.GenerativeModel('gemini-2.5-flash')
     
+    def _filter_modules_by_exam_type(self, modules, exam_type):
+        """Filter modules based on exam type"""
+        if not modules:
+            return []
+        
+        if exam_type == 'internal1':
+            # First 2 modules
+            return modules[:2]
+        elif exam_type == 'internal2':
+            # First 4 modules
+            return modules[:4]
+        elif exam_type == 'internal3':
+            # Modules 5 and 6 (index 4 and 5)
+            return modules[4:6] if len(modules) >= 5 else modules[4:]
+        else:  # semester
+            # All modules
+            return modules
+    
     def generate_study_notes(self, subject_code, exam_type, subject_info, stream=False):
         """Generate comprehensive study notes"""
-        modules_text = "\n".join([f"Module {m['id']}: {m['name']} - Topics: {', '.join(m['topics'])}" 
-                                  for m in subject_info.get('modules', [])])
+        # Filter modules based on exam type
+        all_modules = subject_info.get('modules', [])
+        filtered_modules = self._filter_modules_by_exam_type(all_modules, exam_type)
         
-        prompt = f"""Generate comprehensive study notes for {subject_info.get('name', subject_code)} focusing on {exam_type} exam.
+        modules_text = "\n".join([f"Module {m['id']}: {m['name']} - Topics: {', '.join(m['topics'])}" 
+                                  for m in filtered_modules])
+        
+        exam_type_text = {
+            'internal1': 'Internal 1 (Modules 1-2)',
+            'internal2': 'Internal 2 (Modules 1-4)',
+            'internal3': 'Internal 3 (Modules 5-6)',
+            'semester': 'Semester Exam (All Modules)'
+        }.get(exam_type, exam_type)
+        
+        prompt = f"""Generate comprehensive study notes for {subject_info.get('name', subject_code)} focusing on {exam_type_text}.
 
 Subject: {subject_info.get('name', subject_code)}
 Modules covered:
 {modules_text}
 
 Please provide:
-1. Key concepts and definitions
+1. Key concepts and definitions for each module
 2. Important formulas and algorithms (if applicable)
 3. Real-world examples and applications
 4. Important points to remember
@@ -49,10 +86,21 @@ Make it comprehensive but concise, suitable for exam preparation."""
     
     def generate_flashcards(self, subject_code, exam_type, subject_info):
         """Generate flashcards in JSON format"""
-        modules_text = "\n".join([f"Module {m['id']}: {m['name']} - Topics: {', '.join(m['topics'])}" 
-                                  for m in subject_info.get('modules', [])])
+        # Filter modules based on exam type
+        all_modules = subject_info.get('modules', [])
+        filtered_modules = self._filter_modules_by_exam_type(all_modules, exam_type)
         
-        prompt = f"""Create 20 flashcards for {subject_info.get('name', subject_code)} {exam_type} exam.
+        modules_text = "\n".join([f"Module {m['id']}: {m['name']} - Topics: {', '.join(m['topics'])}" 
+                                  for m in filtered_modules])
+        
+        exam_type_text = {
+            'internal1': 'Internal 1 (Modules 1-2)',
+            'internal2': 'Internal 2 (Modules 1-4)',
+            'internal3': 'Internal 3 (Modules 5-6)',
+            'semester': 'Semester Exam (All Modules)'
+        }.get(exam_type, exam_type)
+        
+        prompt = f"""Create EXACTLY 5 flashcards for {subject_info.get('name', subject_code)} {exam_type_text}.
 
 Subject: {subject_info.get('name', subject_code)}
 Modules:
@@ -70,6 +118,7 @@ Return ONLY a valid JSON array with this exact format (no additional text):
   {{"question": "Explain...", "answer": "..."}}
 ]
 
+IMPORTANT: Generate EXACTLY 5 flashcards, no more, no less.
 Make sure questions are clear and answers are concise but complete."""
 
         try:
@@ -96,53 +145,67 @@ Make sure questions are clear and answers are concise but complete."""
             return json.dumps([{"question": "Error", "answer": str(e)}])
     
     def generate_mindmap(self, subject_code, exam_type, subject_info):
-        """Generate mind map structure"""
-        modules_text = "\n".join([f"Module {m['id']}: {m['name']} - Topics: {', '.join(m['topics'])}" 
-                                  for m in subject_info.get('modules', [])])
+        """Generate mind map in Mermaid.js format"""
+        # Filter modules based on exam type
+        all_modules = subject_info.get('modules', [])
+        filtered_modules = self._filter_modules_by_exam_type(all_modules, exam_type)
         
-        prompt = f"""Create a hierarchical mind map structure for {subject_info.get('name', subject_code)} {exam_type} topics.
+        modules_text = "\n".join([f"Module {m['id']}: {m['name']} - Topics: {', '.join(m['topics'])}" 
+                                  for m in filtered_modules])
+        
+        exam_type_text = {
+            'internal1': 'Internal 1 (Modules 1-2)',
+            'internal2': 'Internal 2 (Modules 1-4)',
+            'internal3': 'Internal 3 (Modules 5-6)',
+            'semester': 'Semester Exam (All Modules)'
+        }.get(exam_type, exam_type)
+        
+        prompt = f"""Create a mind map in Mermaid.js syntax for {subject_info.get('name', subject_code)} - {exam_type_text}.
 
 Subject: {subject_info.get('name', subject_code)}
 Modules:
 {modules_text}
 
-Return ONLY a valid JSON structure with this exact format (no additional text):
-{{
-  "topic": "{subject_info.get('name', subject_code)}",
-  "subtopics": [
-    {{
-      "topic": "Module 1 Name",
-      "subtopics": [
-        {{"topic": "Subtopic 1"}},
-        {{"topic": "Subtopic 2"}}
-      ]
-    }}
-  ]
-}}
+Generate a Mermaid.js mindmap diagram with the following structure:
+- Root node: Subject name
+- Child nodes: Module names
+- Sub-child nodes: Key topics from each module
 
-Create a comprehensive hierarchical structure covering all important topics."""
+Return ONLY the Mermaid.js code (no additional text, no markdown code blocks).
+Start with: mindmap
+Use proper indentation for hierarchy.
+
+Example format:
+mindmap
+  root((Subject Name))
+    Module 1
+      Topic 1
+      Topic 2
+    Module 2
+      Topic 3
+      Topic 4
+
+Generate a comprehensive mind map covering all important topics."""
 
         try:
             response = self.model.generate_content(prompt)
             text = response.text.strip()
-            # Extract JSON from response
-            if text.startswith('{'):
-                return text
-            else:
-                # Try to extract JSON from markdown code block
-                if '```json' in text:
-                    json_start = text.find('{')
-                    json_end = text.rfind('}') + 1
-                    if json_start != -1 and json_end > json_start:
-                        return text[json_start:json_end]
-                elif '```' in text:
-                    json_start = text.find('{')
-                    json_end = text.rfind('}') + 1
-                    if json_start != -1 and json_end > json_start:
-                        return text[json_start:json_end]
+            
+            # Extract mermaid code from markdown if present
+            if '```mermaid' in text:
+                start = text.find('```mermaid') + 10
+                end = text.find('```', start)
+                if end != -1:
+                    return text[start:end].strip()
+            elif '```' in text:
+                start = text.find('```') + 3
+                end = text.find('```', start)
+                if end != -1:
+                    return text[start:end].strip()
+            
             return text
         except Exception as e:
-            return json.dumps({"topic": "Error", "subtopics": [{"topic": str(e)}]})
+            return f"mindmap\n  root((Error))\n    {str(e)}"
     
     def create_study_schedule(self, subjects, exam_date, hours_per_day, stream=False):
         """Create personalized study timetable"""
@@ -220,3 +283,67 @@ Provide a helpful, encouraging, and educational response."""
                 yield f"Error: {str(e)}"
             else:
                 return f"Error: {str(e)}"
+    
+    def generate_pdf_from_notes(self, notes_text, subject_name, exam_type):
+        """Generate PDF from study notes"""
+        try:
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=A4,
+                                  rightMargin=72, leftMargin=72,
+                                  topMargin=72, bottomMargin=18)
+            
+            # Container for the 'Flowable' objects
+            elements = []
+            
+            # Define styles
+            styles = getSampleStyleSheet()
+            styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
+            
+            # Title
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=24,
+                textColor='#4f46e5',
+                spaceAfter=30,
+                alignment=TA_CENTER
+            )
+            
+            exam_type_text = {
+                'internal1': 'Internal 1',
+                'internal2': 'Internal 2',
+                'internal3': 'Internal 3',
+                'semester': 'Semester Exam'
+            }.get(exam_type, exam_type)
+            
+            title = Paragraph(f"{subject_name}<br/>{exam_type_text} - Study Notes", title_style)
+            elements.append(title)
+            elements.append(Spacer(1, 12))
+            
+            # Convert markdown to simple text and add to PDF
+            # Clean the text
+            clean_text = notes_text.replace('**', '').replace('*', '').replace('#', '')
+            
+            # Split into paragraphs
+            paragraphs = clean_text.split('\n\n')
+            
+            for para in paragraphs:
+                if para.strip():
+                    # Check if it looks like a heading (short line)
+                    if len(para) < 100 and not para.startswith(' '):
+                        elements.append(Paragraph(para, styles['Heading2']))
+                    else:
+                        elements.append(Paragraph(para.replace('\n', '<br/>'), styles['BodyText']))
+                    elements.append(Spacer(1, 12))
+            
+            # Build PDF
+            doc.build(elements)
+            
+            # Get the value of the BytesIO buffer
+            pdf = buffer.getvalue()
+            buffer.close()
+            
+            return pdf
+        except Exception as e:
+            print(f"Error generating PDF: {str(e)}")
+            return None

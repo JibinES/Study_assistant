@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Study Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -58,13 +62,18 @@
             <!-- Generated Content Cards -->
             <div class="content-cards" id="content-cards">
                 <div class="card" id="notes-card">
-                    <h3>📝 Study Notes</h3>
+                    <div class="card-header">
+                        <h3>📝 Study Notes</h3>
+                        <button id="download-pdf-btn" class="btn-download hidden" onclick="downloadPDF()">
+                            📥 Download PDF
+                        </button>
+                    </div>
                     <div class="card-content" id="notes-content">
                         <p class="placeholder">Generate study material to see notes here</p>
                     </div>
                 </div>
                 <div class="card" id="flashcards-card">
-                    <h3>🎴 Flashcards</h3>
+                    <h3>🎴 Flashcards (5 cards)</h3>
                     <div class="card-content" id="flashcards-content">
                         <p class="placeholder">Generate study material to see flashcards here</p>
                     </div>

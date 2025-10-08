@@ -4,6 +4,10 @@ let timerSeconds = 0;
 let isPaused = false;
 let chatHistory = [];
 let currentContext = '';
+let currentNotes = '';
+let currentSubjectName = '';
+let currentSubjectCode = '';
+let currentExamType = '';
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -102,6 +106,11 @@ async function generateContent() {
             exam_type: examType
         });
         
+        // Store for PDF generation
+        currentSubjectName = result.subject_name;
+        currentSubjectCode = result.subject_code;
+        currentExamType = result.exam_type;
+        
         // Update context for chat
         currentContext = `Subject: ${result.subject_name} (${subjectCode}), Exam: ${examType}`;
         
@@ -109,9 +118,9 @@ async function generateContent() {
         const flashcardsContent = document.getElementById('flashcards-content');
         displayFlashcards(result.flashcards, flashcardsContent);
         
-        // Display mind map
+        // Display mind map using Mermaid.js
         const mindmapContent = document.getElementById('mindmap-content');
-        displayMindMap(result.mindmap, mindmapContent);
+        displayMermaidMindMap(result.mindmap, mindmapContent);
         
         // Now stream the study notes
         const notesContent = document.getElementById('notes-content');
@@ -166,10 +175,16 @@ async function generateContent() {
             }
         }
         
+        // Store notes for PDF generation
+        currentNotes = fullNotes;
+        
+        // Show download button
+        document.getElementById('download-pdf-btn').classList.remove('hidden');
+        
         showNotification(`Study material generated for ${result.subject_name}!`, 'success');
     } catch (error) {
         console.error('Error generating content:', error);
-        showNotification('Error generating content', 'error');
+        showNotification('Error generating content: ' + error.message, 'error');
     } finally {
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('content-cards').style.opacity = '1';
@@ -231,7 +246,24 @@ function flipCard(index) {
     card.classList.toggle('flipped');
 }
 
-// Display mind map
+// Display mind map using Mermaid.js
+function displayMermaidMindMap(mermaidCode, container) {
+    try {
+        // Create a unique ID for the mermaid diagram
+        const diagramId = 'mermaid-' + Date.now();
+        container.innerHTML = `<div id="${diagramId}" class="mermaid-container">${mermaidCode}</div>`;
+        
+        // Render the mermaid diagram
+        mermaid.run({
+            querySelector: `#${diagramId}`
+        });
+    } catch (error) {
+        console.error('Error rendering mind map:', error);
+        container.innerHTML = '<p class="placeholder">Error loading mind map</p>';
+    }
+}
+
+// Old display mind map function (kept for compatibility)
 function displayMindMap(mindmapJSON, container) {
     try {
         const mindmap = typeof mindmapJSON === 'string' ? JSON.parse(mindmapJSON) : mindmapJSON;
@@ -254,6 +286,57 @@ function displayMindMap(mindmapJSON, container) {
     } catch (error) {
         console.error('Error parsing mind map:', error);
         container.innerHTML = '<p class="placeholder">Error loading mind map</p>';
+    }
+}
+
+// Download PDF function
+async function downloadPDF() {
+    if (!currentNotes) {
+        showNotification('No notes available to download', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/download-pdf', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                notes: currentNotes,
+                subject_name: currentSubjectName,
+                exam_type: currentExamType,
+                subject_code: currentSubjectCode
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF');
+        }
+        
+        // Create a blob from the response
+        const blob = await response.blob();
+        
+        // Create a download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const examTypeText = {
+            'internal1': 'Internal1',
+            'internal2': 'Internal2',
+            'internal3': 'Internal3',
+            'semester': 'Semester'
+        }[currentExamType] || currentExamType;
+        
+        a.download = `${currentSubjectCode}_${currentSubjectName.replace(/ /g, '_')}_${examTypeText}_Notes.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showNotification('PDF downloaded successfully!', 'success');
+    } catch (error) {
+        console.error('Error downloading PDF:', error);
+        showNotification('Error downloading PDF: ' + error.message, 'error');
     }
 }
 
